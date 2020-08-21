@@ -2,14 +2,21 @@ import React, {useState, useEffect} from 'react';
 import './App.css';
 import formSchema from './validation/formSchema'
 import Forms from './Form.js/Forms'
+import User from './User'
 import axios from 'axios'
 import * as yup from 'yup'
 
 const initialFormValues = {
   username: '',
+  email: '',
+  password: '',
+  termsOfService: '',
 }
 const initialFormErrors = {
   username: '',
+  email: '',
+  password: '',
+  termsOfService: '',
 }
 const initialPeople = []
 const initialDisabled = true
@@ -20,18 +27,18 @@ export default function App() {
   const [formErrors, setFormErrors] = useState(initialFormErrors)
   const [disabled, setDisabled] = useState(initialDisabled)     
 
-  const getPeople = () => {
+  const getUsers = () => {
     axios.get('https://reqres.in/api/users')
     .then(res =>{
-      setPeople(res.data)
+      setPeople(...people, ...res.data)
     })
     .catch(err =>{
       console.log(err)
     })
   }
 
-  const postNewPeople = NewPeeps => {
-    axios.post('https://reqres.in/api/users', NewPeeps)
+  const postNewPeople = newPeeps => {
+    axios.post('https://reqres.in/api/users', newPeeps)
     .then(res =>{
       setPeople(...people, res.data)
     })
@@ -51,13 +58,25 @@ export default function App() {
   }
   const inputChange = (name, value) => {
     yup
-    .reach(formSchema, name)
-    .validate(value)
-    .then(valid => {
-      setFormErrors({
-        ...formErrors,
-        [name]: ""
-      });
+      .reach(formSchema, name)
+      .validate(value)
+
+      .then(success => {
+        setFormErrors({
+          ...formErrors,
+          [name]: "",
+          })
+        })
+      .catch(err => {
+        setFormErrors({
+          ...formErrors, 
+          [name]: err.errors[0],
+        })
+      })
+
+    setFormValues({
+      ...formValues,
+      [name]: value,
     })
   }
   const submit = evt => {
@@ -71,7 +90,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    getPeople()
+    getUsers()
   }, [])
 
   useEffect(() => {
@@ -92,6 +111,13 @@ export default function App() {
       disabled={disabled}
       errors={formErrors}
       /> 
+       {
+        people.map(data => {
+          return (
+          <User key={data.name} user={data}/>
+          )
+        })
+      }
       </header>
     </div>
   );
